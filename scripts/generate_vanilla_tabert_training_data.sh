@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 set +e
 
-output_dir=data/train_data/vanilla_tabert
+# output_dir=data/train_data/vanilla_tabert
+# output_dir=/Users/mac/Desktop/syt/Deep-Learning/Dataset/TaBERT_datasets/train_data/vanilla_tabert
+output_dir=/vault/TaBERT_datasets/train_data/vanilla_tabert
 mkdir -p ${output_dir}
+
+# train_corpus=/Users/mac/Desktop/syt/Deep-Learning/Dataset/TaBERT_datasets/tables.jsonl
+train_corpus=/vault/TaBERT_datasets/tables.jsonl
 
 python -m utils.generate_vanilla_tabert_training_data \
     --output_dir ${output_dir} \
-    --train_corpus data/preprocessed_data/tables.jsonl \
+    --train_corpus ${train_corpus} \
     --base_model_name bert-base-uncased \
     --do_lower_case \
     --epochs_to_generate 15 \
