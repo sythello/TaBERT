@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set +e
 
+# YS
 output_dir=data/train_data/vertical_tabert
 mkdir -p ${output_dir}
 

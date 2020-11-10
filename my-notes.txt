@@ -1,0 +1,6 @@
+- Training: OOM
+- empty_cache_freq 128 -> 32: still OOM, around the same step as above, seems not helpful; change back
+- batch_size 8 -> 4: is able to train. Using this for now
+
+7.5s/it, 33699it/epoch, about 70h/epoch, max 10 epochs, about 30 days
+
