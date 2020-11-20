@@ -29,12 +29,17 @@ from random import shuffle, choice, sample, random
 
 from table_bert.utils import BertTokenizer
 
-from table_bert.input_formatter import VanillaTableBertInputFormatter, TableBertBertInputFormatter
+from table_bert.input_formatter import VanillaTableBertInputFormatter, TableBertBertInputFormatter, \
+    TableTooLongError
 from table_bert.config import TableBertConfig
 from table_bert.dataset import Example, TableDatabase
 # from utils.prepare_training_data import sample_context
 from utils.generate_vertical_tabert_training_data import sample_context     # @YS: ??
 
+from table_bert.speakql.input_formatter_with_confusion import VanillaTableBertInputFormatterWithConfusion
+from table_bert.speakql.acoustic_confusers import \
+    SentenceAcousticConfuser, SentenceAcousticConfuser_RandomReplace, SentenceAcousticConfuser_GPT2LossReplace, \
+    detokenize_BertTokenizer
 
 def generate_for_epoch(table_db: TableDatabase,
                        indices: List[int],
@@ -45,7 +50,8 @@ def generate_for_epoch(table_db: TableDatabase,
     if debug_file:
         f_dbg = open(debug_file, 'w')
 
-    sequences = []
+    sequences = []      ## YS: confused masked sequence
+    sequences_ref = []  ## YS: non-confused masked sequence
     segment_a_lengths = []
     sequence_offsets = []
     masked_lm_positions = []
@@ -62,11 +68,16 @@ def generate_for_epoch(table_db: TableDatabase,
             'masked_lm_offsets': np.uint64(masked_lm_offsets)
         }
 
+        ## YS
+        if args.include_ref_tokens:
+            data['sequences_ref'] = np.uint16(sequences_ref)
+
         with h5py.File(str(epoch_file), 'w') as f:
             for key, val in data.items():
                 f.create_dataset(key, data=val)
 
         del sequences[:]
+        del sequences_ref[:]
         del segment_a_lengths[:]
         del sequence_offsets[:]
         del masked_lm_positions[:]
@@ -87,6 +98,9 @@ def generate_for_epoch(table_db: TableDatabase,
                 cur_pos = len(sequences)
                 sequence_len = len(instance['token_ids'])
                 sequences.extend(instance['token_ids'])
+                ## YS
+                if args.include_ref_tokens:
+                    sequences_ref.extend(instance['token_ref_ids'])
                 segment_a_lengths.append(instance['segment_a_length'])
                 sequence_offsets.append([cur_pos, cur_pos + sequence_len])
 
@@ -95,7 +109,7 @@ def generate_for_epoch(table_db: TableDatabase,
                 masked_lm_positions.extend(instance['masked_lm_positions'])
                 masked_lm_label_ids.extend(instance['masked_lm_label_ids'])
                 masked_lm_offsets.append([cur_pos, cur_pos + lm_mask_len])
-        except:
+        except ValueError as e:
             # raise
             typ, value, tb = sys.exc_info()
             print('*' * 50 + 'Exception' + '*' * 50, file=sys.stderr)
@@ -105,6 +119,10 @@ def generate_for_epoch(table_db: TableDatabase,
             # print('*' * 50 + 'Exception' + '*' * 50, file=sys.stderr)
 
             sys.stderr.flush()
+
+            ## YS: debug
+            if not isinstance(e, TableTooLongError):
+                raise e
 
     _save_shard()
 
@@ -119,6 +137,13 @@ def main():
     parser.add_argument('--global_rank', type=int, default=os.environ.get('SLURM_PROCID', 0))
     parser.add_argument('--world_size', type=int, default=os.environ.get('SLURM_NTASKS', 1))
 
+    ## YS
+    parser.add_argument('--use_acoustic_confusion', action='store_true', default=False)
+    parser.add_argument('--acoustic_confusion_prob', type=float, default=0.15,
+                        help="Probability of replacing a token with a confused one")
+    # parser.add_argument('--acoustic_confusion_type', type=str, choices=['random', 'gpt2'], default='random')
+    parser.add_argument('--word_confusion_path', type=Path, default='')
+    
     TableBertConfig.add_args(parser)
 
     args = parser.parse_args()
@@ -134,7 +159,14 @@ def main():
 
     table_bert_config = TableBertConfig.from_dict(vars(args))
     tokenizer = BertTokenizer.from_pretrained(table_bert_config.base_model_name)
-    input_formatter = VanillaTableBertInputFormatter(table_bert_config, tokenizer)
+
+    ## YS TODO?: add option for gpt2
+    acoustic_confuser = SentenceAcousticConfuser_RandomReplace(args.word_confusion_path, default_p=args.acoustic_confusion_prob)
+
+    ## YS
+    # input_formatter = VanillaTableBertInputFormatter(table_bert_config, tokenizer)
+    assert args.word_confusion_path != ''
+    input_formatter = VanillaTableBertInputFormatterWithConfusion(table_bert_config, tokenizer, acoustic_confuser)
 
     total_tables_num = int(subprocess.check_output(f"wc -l {args.train_corpus}", shell=True).split()[0])
     dev_table_num = min(int(total_tables_num * 0.1), 100000)

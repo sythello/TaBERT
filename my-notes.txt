@@ -4,3 +4,6 @@
 
 7.5s/it, 33699it/epoch, about 70h/epoch, max 10 epochs, about 30 days
 
+batch_size = 6: is runnable, still ~70h/epoch; GPU memory ~7500/12000MB (might be inaccurate)
+batch_size = 8, fp16: is runnable(!), ~60h/epoch, GPU memory ~6600/12000MB (might be inaccurate)
+

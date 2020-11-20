@@ -231,4 +231,5 @@ dmypy.json
 
 # @YS
 pretrained-models/
+pretrain/
 *.ipynb_checkpoints*

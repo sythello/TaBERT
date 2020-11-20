@@ -2,12 +2,14 @@
 set +e
 
 # output_dir=data/train_data/vanilla_tabert
-# output_dir=/Users/mac/Desktop/syt/Deep-Learning/Dataset/TaBERT_datasets/train_data/vanilla_tabert
-output_dir=/vault/TaBERT_datasets/train_data/vanilla_tabert
+output_dir=/Users/mac/Desktop/syt/Deep-Learning/Dataset/TaBERT_datasets/train_data/vanilla_tabert_sample_ac0
+# output_dir=/vault/TaBERT_datasets/train_data/vanilla_tabert
 mkdir -p ${output_dir}
 
-# train_corpus=/Users/mac/Desktop/syt/Deep-Learning/Dataset/TaBERT_datasets/tables.jsonl
-train_corpus=/vault/TaBERT_datasets/tables.jsonl
+train_corpus=/Users/mac/Desktop/syt/Deep-Learning/Dataset/TaBERT_datasets/tables_sample.jsonl
+# train_corpus=/vault/TaBERT_datasets/tables.jsonl
+
+word_confusion_path=/Users/mac/Desktop/syt/Deep-Learning/Repos/TaBERT/data/word_confusions.pkl
 
 python -m utils.generate_vanilla_tabert_training_data \
     --output_dir ${output_dir} \
@@ -22,4 +24,8 @@ python -m utils.generate_vanilla_tabert_training_data \
     --masked_context_prob 0.15 \
     --max_predictions_per_seq 200 \
     --cell_input_template 'column|type|value' \
-    --column_delimiter "[SEP]"
+    --column_delimiter "[SEP]" \
+    --word_confusion_path ${word_confusion_path} \
+    
+    # --include_ref_tokens
+    # --add_fixing_in_mlm

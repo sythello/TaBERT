@@ -82,6 +82,9 @@ class TableBertConfig(SimpleNamespace):
         context_sample_strategy: str = 'nearest',
         table_mask_strategy: str = 'column',
         do_lower_case: bool = True,
+        ## YS
+        include_ref_tokens: bool = False,
+        add_fixing_in_mlm: bool = False,
         **kwargs
     ):
         super(TableBertConfig, self).__init__()
@@ -112,6 +115,9 @@ class TableBertConfig(SimpleNamespace):
         self.max_predictions_per_seq = max_predictions_per_seq
         self.context_sample_strategy = context_sample_strategy
         self.table_mask_strategy = table_mask_strategy
+
+        self.include_ref_tokens = include_ref_tokens
+        self.add_fixing_in_mlm = add_fixing_in_mlm
 
         if not hasattr(self, 'vocab_size_or_config_json_file'):
             bert_config = BERT_CONFIGS[self.base_model_name]
@@ -149,6 +155,12 @@ class TableBertConfig(SimpleNamespace):
 
         parser.add_argument("--do_lower_case", action="store_true")
         parser.set_defaults(do_lower_case=True)
+
+        ## YS
+        parser.add_argument('--include_ref_tokens', action='store_true', default=False,
+                        help='AC approach 1: enforce similar representations between confused and reference (non-confused) tokens')
+        parser.add_argument('--add_fixing_in_mlm', action='store_true', default=False,
+                            help='AC approach 2: add confused tokens to "masked" tokens and use reference tokens as their labels')
 
         return parser
 
