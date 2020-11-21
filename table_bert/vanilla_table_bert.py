@@ -14,7 +14,7 @@ from fairseq import distributed_utils
 from tqdm import tqdm
 
 import torch
-from torch.nn import CrossEntropyLoss
+from torch.nn import CrossEntropyLoss, CosineEmbeddingLoss
 from torch_scatter import scatter_max, scatter_mean
 
 from table_bert.utils import BertForPreTraining, BertForMaskedLM, TRANSFORMER_VERSION, TransformerVersion
@@ -46,13 +46,38 @@ class VanillaTableBert(TableBertModel):
             loss_fct = CrossEntropyLoss(ignore_index=-1, reduction='sum')
             masked_lm_loss = loss_fct(prediction_scores.view(-1, self.bert_config.vocab_size), masked_lm_labels.view(-1))
 
+            ## YS
+            loss = masked_lm_loss
+
+            ## YS
+            if 'input_ref_ids' in kwargs:
+                input_ref_ids = kwargs['input_ref_ids']
+                sequence_ref_output, _ = self._bert_model.bert(input_ids, token_type_ids, attention_mask,
+                                       output_all_encoded_layers=False)
+
+                ## Similarity loss between [CLS] tokens. Cosine similarity with in-batch negative samples
+                sim_loss_fct = CosineEmbeddingLoss(margin=0, reduction='mean')
+
+                _bs, _seq_len, _bert_dim = sequence_output.size()
+
+                _t_output = sequence_output[:, 0, :].unsqueeze(0).expand(_bs, _bs, _bert_dim).reshape(_bs * _bs, _bert_dim)
+                _t_ref_output = sequence_output[:, 0, :].unsqueeze(1).expand(_bs, _bs, _bert_dim).reshape(_bs * _bs, _bert_dim)
+                _y = torch.tensor(np.eye(_bs) * 2 - np.ones((_bs, _bs)), dtype=sequence_output.dtype, device=sequence_output.device).view(_bs * _bs)
+                sim_loss = sim_loss_fct(_t_output, _t_ref_output, _y)
+
+                loss += sim_loss
+
             sample_size = masked_lm_labels.ne(-1).sum().item()
             logging_output = {
                 'sample_size': sample_size,
-                'loss': masked_lm_loss.item()
+                'mlm_loss': masked_lm_loss.item(),
+                'loss': loss.item()
             }
 
-            return masked_lm_loss, logging_output
+            if 'input_ref_ids' in kwargs:
+                logging_output['sim_loss'] = sim_loss.item()
+
+            return loss, logging_output
         else:
             return prediction_scores
 

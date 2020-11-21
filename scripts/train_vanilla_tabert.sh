@@ -3,11 +3,11 @@ set +e
 
 # YS: not able to run locally; cpu training not supported
 
-# train_data_dir=/Users/mac/Desktop/syt/Deep-Learning/Dataset/TaBERT_datasets/train_data/vanilla_tabert_sample
-train_data_dir=/vault/TaBERT_datasets/train_data/vanilla_tabert
+train_data_dir=/Users/mac/Desktop/syt/Deep-Learning/Dataset/TaBERT_datasets/train_data/vanilla_tabert_sample
+# train_data_dir=/vault/TaBERT_datasets/train_data/vanilla_tabert
 
-# run_dir=/Users/mac/Desktop/syt/Deep-Learning/repos/TaBERT/pretrain/runs/vanilla_tabert_sample
-run_dir=/vault/TaBERT/pretrain/runs/vanilla_tabert
+run_dir=/Users/mac/Desktop/syt/Deep-Learning/repos/TaBERT/pretrain/runs/vanilla_tabert_sample
+# run_dir=/vault/TaBERT/pretrain/runs/vanilla_tabert
 mkdir -p ${run_dir}
 
 python train.py \
@@ -23,4 +23,4 @@ python train.py \
     --weight-decay 0.0 \
     --fp16 \
     --clip-norm 1.0 \
-    --empty-cache-freq 128
+    --empty-cache-freq 128 \

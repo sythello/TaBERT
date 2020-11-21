@@ -9,7 +9,7 @@ mkdir -p ${output_dir}
 train_corpus=/Users/mac/Desktop/syt/Deep-Learning/Dataset/TaBERT_datasets/tables_sample.jsonl
 # train_corpus=/vault/TaBERT_datasets/tables.jsonl
 
-word_confusion_path=/Users/mac/Desktop/syt/Deep-Learning/Repos/TaBERT/data/word_confusions.pkl
+word_confusion_path=data/word_confusions.pkl
 
 python -m utils.generate_vanilla_tabert_training_data \
     --output_dir ${output_dir} \

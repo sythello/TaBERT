@@ -247,9 +247,13 @@ class TableDataset(Dataset):
         max_len = max(len(e['token_ids']) for e in examples)
 
         input_array = np.zeros((batch_size, max_len), dtype=np.int)
+        input_ref_array = np.zeros((batch_size, max_len), dtype=np.int) ## YS
         mask_array = np.zeros((batch_size, max_len), dtype=np.bool)
         segment_array = np.zeros((batch_size, max_len), dtype=np.bool)
         lm_label_array = np.full((batch_size, max_len), dtype=np.int, fill_value=-1)
+
+        ## YS
+        include_ref_tokens = (len(examples) > 0) and ('token_ref_ids' in examples[0])
 
         for e_id, example in enumerate(examples):
             token_ids = example['token_ids']
@@ -265,14 +269,24 @@ class TableDataset(Dataset):
             segment_array[e_id, example['sequence_a_length']:] = 1
             lm_label_array[e_id, masked_lm_positions] = masked_label_ids
 
+            if include_ref_tokens:
+                assert len(example['token_ref_ids']) == len(token_ids)
+                input_ref_array[e_id, :len(token_ids)] = example['token_ref_ids']
+
         # input_ids, input_mask, segment_ids, lm_label_ids
-        return {
+        _ret_dict = {
             'input_ids': torch.tensor(input_array.astype(np.int64)),
             'attention_mask': torch.tensor(mask_array.astype(np.int64)),
             'token_type_ids': torch.tensor(segment_array.astype(np.int64)),
             'masked_lm_labels': torch.tensor(lm_label_array.astype(np.int64)),
             'sample_size': (lm_label_array != -1).sum()
         }
+
+        ## YS
+        if include_ref_tokens:
+            _ret_dict['input_ref_ids']: torch.tensor(input_ref_array.astype(np.int64))
+
+        return _ret_dict
 
 
 class Example(object):
