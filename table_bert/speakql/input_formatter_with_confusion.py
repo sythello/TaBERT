@@ -32,6 +32,9 @@ from table_bert.speakql.acoustic_confusers import \
 # class TableTooLongError(ValueError):
 #     pass
 
+class SubwordMismatchError(ValueError):
+    pass
+
 
 class VanillaTableBertInputFormatterWithConfusion(TableBertBertInputFormatter):
     ## YS
@@ -201,7 +204,8 @@ class VanillaTableBertInputFormatterWithConfusion(TableBertBertInputFormatter):
             context_detok = detokenize_BertTokenizer(context).split(' ')
             context_detok_confs = self.acoustic_confuser.sentence_confuse(context_detok)
             context_confs = self.tokenizer.tokenize(' '.join(context_detok_confs))
-            assert len(context_confs) == len(context), f'\n{context} ({len(context)})\n{context_confs} ({len(context_confs)})'
+            if len(context_confs) != len(context):
+                raise SubwordMismatchError(f'\n{context} ({len(context)})\n{context_confs} ({len(context_confs)})')
 
             for col_idx, column in enumerate(example.header):
                 col_values = example.column_data[col_idx]

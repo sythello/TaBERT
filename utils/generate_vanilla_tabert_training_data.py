@@ -39,7 +39,8 @@ from utils.generate_vertical_tabert_training_data import sample_context     # @Y
 from table_bert.speakql.input_formatter_with_confusion import VanillaTableBertInputFormatterWithConfusion
 from table_bert.speakql.acoustic_confusers import \
     SentenceAcousticConfuser, SentenceAcousticConfuser_RandomReplace, SentenceAcousticConfuser_GPT2LossReplace, \
-    detokenize_BertTokenizer
+    detokenize_BertTokenizer, \
+    SubwordMismatchError
 
 def generate_for_epoch(table_db: TableDatabase,
                        indices: List[int],
@@ -121,7 +122,7 @@ def generate_for_epoch(table_db: TableDatabase,
             sys.stderr.flush()
 
             ## YS: debug
-            if not isinstance(e, TableTooLongError):
+            if type(e) not in [TableTooLongError, SubwordMismatchError]:
                 raise e
 
     _save_shard()
