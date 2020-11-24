@@ -36,11 +36,11 @@ from table_bert.dataset import Example, TableDatabase
 # from utils.prepare_training_data import sample_context
 from utils.generate_vertical_tabert_training_data import sample_context     # @YS: ??
 
-from table_bert.speakql.input_formatter_with_confusion import VanillaTableBertInputFormatterWithConfusion
+from table_bert.speakql.input_formatter_with_confusion import VanillaTableBertInputFormatterWithConfusion, \
+    SubwordMismatchError
 from table_bert.speakql.acoustic_confusers import \
     SentenceAcousticConfuser, SentenceAcousticConfuser_RandomReplace, SentenceAcousticConfuser_GPT2LossReplace, \
-    detokenize_BertTokenizer, \
-    SubwordMismatchError
+    detokenize_BertTokenizer
 
 def generate_for_epoch(table_db: TableDatabase,
                        indices: List[int],
