@@ -19,17 +19,19 @@ def detokenize_BertTokenizer(sentence: List[str]) -> str:
     return (
         " ".join(sentence)
         .replace(" ##", "")
-        .replace(" .", ".")
-        .replace(" ?", "?")
-        .replace(" !", "!")
-        .replace(" ,", ",")
-        .replace(" ' ", "'")
-        .replace(" n't", "n't")
-        .replace(" 'm", "'m")
-        .replace(" 's", "'s")
-        .replace(" 've", "'ve")
-        .replace(" 're", "'re")
+        # .replace(" .", ".")
+        # .replace(" ?", "?")
+        # .replace(" !", "!")
+        # .replace(" ,", ",")
+        # .replace(" ' ", "'")
+        # .replace(" n't", "n't")
+        # .replace(" 'm", "'m")
+        # .replace(" 's", "'s")
+        # .replace(" 've", "'ve")
+        # .replace(" 're", "'re")
     )
+    
+    ## These modifications can cause subword length mismatch
 
 
 class SentenceAcousticConfuser(object):
