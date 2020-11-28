@@ -2,7 +2,7 @@
 set +e
 
 # output_dir=data/train_data/vanilla_tabert
-output_dir=/Users/mac/Desktop/syt/Deep-Learning/Dataset/TaBERT_datasets/train_data/vanilla_tabert_sample_ac0
+output_dir=/Users/mac/Desktop/syt/Deep-Learning/Dataset/TaBERT_datasets/train_data/vanilla_tabert_sample_ac3
 # output_dir=/vault/TaBERT_datasets/train_data/vanilla_tabert
 mkdir -p ${output_dir}
 
@@ -26,6 +26,8 @@ python -m utils.generate_vanilla_tabert_training_data \
     --cell_input_template 'column|type|value' \
     --column_delimiter "[SEP]" \
     --word_confusion_path ${word_confusion_path} \
+    --include_ref_tokens \
+    --add_fixing_in_mlm
     
     # --include_ref_tokens
     # --add_fixing_in_mlm

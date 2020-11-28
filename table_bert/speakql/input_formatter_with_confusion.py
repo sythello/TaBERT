@@ -300,10 +300,24 @@ class VanillaTableBertInputFormatterWithConfusion(TableBertBertInputFormatter):
             num_column_to_mask = max(1, ceil(num_maskable_columns * self.config.masked_column_prob))
             columns_to_mask = sorted(sample(list(range(num_maskable_columns)), num_column_to_mask))
             shuffle(columns_to_mask)
-            num_column_tokens_to_mask = sum(len(column_indices[i]) for i in columns_to_mask)
-            masked_column_token_indices = [idx for col in columns_to_mask for idx in column_indices[col]]
 
-            info['num_masked_columns'] = num_column_to_mask
+            ## YS: the original code might exceed self.config.max_predictions_per_seq!
+            # num_column_tokens_to_mask = sum(len(column_indices[i]) for i in columns_to_mask)
+            # masked_column_token_indices = [idx for col in columns_to_mask for idx in column_indices[col]]
+            # info['num_masked_columns'] = num_column_to_mask
+
+            masked_column_token_indices = []
+            num_masked_columns = len(columns_to_mask)
+
+            for col in columns_to_mask:
+                if len(masked_column_token_indices) + len(column_indices[col]) > self.config.max_predictions_per_seq:
+                    # Cannot add this column and later columns
+                    num_masked_columns = col
+                    break
+                masked_column_token_indices.extend(column_indices[col])
+            
+            num_column_tokens_to_mask = len(masked_column_token_indices)
+            info['num_masked_columns'] = num_masked_columns
         else:
             raise RuntimeError('unknown mode!')
 
@@ -314,7 +328,7 @@ class VanillaTableBertInputFormatterWithConfusion(TableBertBertInputFormatter):
             # Prioritize confs tokens
             num_context_confs_tokens_to_mask = min(len(context_confs_indices), max_context_token_to_mask)
             # Then add correct tokens
-            num_context_corr_tokens_to_mask = min(max_context_token_to_mask - len(context_confs_indices),
+            num_context_corr_tokens_to_mask = min(max_context_token_to_mask - num_context_confs_tokens_to_mask,
                                              max(1, int(len(context_corr_indices) * self.config.masked_context_prob)))
 
             if num_context_corr_tokens_to_mask > 0:
@@ -331,12 +345,26 @@ class VanillaTableBertInputFormatterWithConfusion(TableBertBertInputFormatter):
                 masked_context_confs_token_indices = sorted(sample(context_confs_indices, num_context_confs_tokens_to_mask))
 
                 masked_indices = sorted(masked_context_confs_token_indices + masked_column_token_indices)
-                assert len(masked_indices) == self.config.max_predictions_per_seq
+                assert len(masked_indices) == self.config.max_predictions_per_seq, \
+                    f'''self.config.max_predictions_per_seq = {self.config.max_predictions_per_seq}\n
+                    num_column_tokens_to_mask = {num_column_tokens_to_mask}\n
+                    max_context_token_to_mask = {max_context_token_to_mask}\n
+                    len(context_confs_indices) = {len(context_confs_indices)}\n
+                    num_context_confs_tokens_to_mask = {num_context_confs_tokens_to_mask}\n
+                    num_context_corr_tokens_to_mask = {num_context_corr_tokens_to_mask}\n
+                    len(masked_indices) = {len(masked_indices)}\n'''
                 num_context_tokens_to_mask = masked_context_confs_token_indices
             else:
                 # Only masking column tokens, no context tokens masked
                 masked_indices = masked_column_token_indices
-                assert len(masked_indices) == self.config.max_predictions_per_seq
+                assert len(masked_indices) == self.config.max_predictions_per_seq, \
+                    f'''self.config.max_predictions_per_seq = {self.config.max_predictions_per_seq}\n
+                    num_column_tokens_to_mask = {num_column_tokens_to_mask}\n
+                    max_context_token_to_mask = {max_context_token_to_mask}\n
+                    len(context_confs_indices) = {len(context_confs_indices)}\n
+                    num_context_confs_tokens_to_mask = {num_context_confs_tokens_to_mask}\n
+                    num_context_corr_tokens_to_mask = {num_context_corr_tokens_to_mask}\n
+                    len(masked_indices) = {len(masked_indices)}\n'''
                 num_context_tokens_to_mask = 0
 
         else:
