@@ -293,7 +293,7 @@ class TableDataset(Dataset):
 
         ## YS
         if include_ref_tokens:
-            _ret_dict['input_ref_ids']: torch.tensor(input_ref_array.astype(np.int64))
+            _ret_dict['input_ref_ids'] = torch.tensor(input_ref_array.astype(np.int64))
 
         return _ret_dict
 
