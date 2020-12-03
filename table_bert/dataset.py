@@ -208,6 +208,11 @@ class TableDataset(Dataset):
             masked_lm_label_ids = data['masked_lm_label_ids']
             masked_lm_offsets = data['masked_lm_offsets']
 
+            ## YS
+            include_ref_tokens = ('sequences_ref' in data)
+            if include_ref_tokens:
+                sequences_ref = data['sequences_ref']
+
             shard_size = len(segment_a_lengths)
 
             for i in range(shard_size):
@@ -227,6 +232,10 @@ class TableDataset(Dataset):
                 tgt_begin, tgt_end = masked_lm_offsets[i]
                 example['masked_lm_positions'] = masked_lm_positions[tgt_begin: tgt_end]
                 example['masked_lm_label_ids'] = masked_lm_label_ids[tgt_begin: tgt_end]
+
+                ## YS
+                if include_ref_tokens:
+                    example['token_ref_ids'] = sequences_ref[seq_begin: seq_end]
 
                 examples.append(example)
 
