@@ -161,13 +161,14 @@ def main():
     table_bert_config = TableBertConfig.from_dict(vars(args))
     tokenizer = BertTokenizer.from_pretrained(table_bert_config.base_model_name)
 
-    ## YS TODO?: add option for gpt2
-    acoustic_confuser = SentenceAcousticConfuser_RandomReplace(args.word_confusion_path, default_p=args.acoustic_confusion_prob)
-
     ## YS
-    # input_formatter = VanillaTableBertInputFormatter(table_bert_config, tokenizer)
-    assert args.word_confusion_path != ''
-    input_formatter = VanillaTableBertInputFormatterWithConfusion(table_bert_config, tokenizer, acoustic_confuser)
+    if args.use_acoustic_confusion:
+        assert args.word_confusion_path != ''
+
+        acoustic_confuser = SentenceAcousticConfuser_RandomReplace(args.word_confusion_path, default_p=args.acoustic_confusion_prob)
+        input_formatter = VanillaTableBertInputFormatterWithConfusion(table_bert_config, tokenizer, acoustic_confuser)
+    else:
+        input_formatter = VanillaTableBertInputFormatter(table_bert_config, tokenizer)
 
     total_tables_num = int(subprocess.check_output(f"wc -l {args.train_corpus}", shell=True).split()[0])
     dev_table_num = min(int(total_tables_num * 0.1), 100000)

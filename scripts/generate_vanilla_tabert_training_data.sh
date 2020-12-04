@@ -25,6 +25,7 @@ python -m utils.generate_vanilla_tabert_training_data \
     --max_predictions_per_seq 200 \
     --cell_input_template 'column|type|value' \
     --column_delimiter "[SEP]" \
+    --use_acoustic_confusion \
     --word_confusion_path ${word_confusion_path} \
     --include_ref_tokens \
     --add_fixing_in_mlm
